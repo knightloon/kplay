@@ -1,0 +1,59 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.8.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath('se.transmode.gradle:gradle-docker:1.2')
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'application'
+apply plugin: 'docker'
+
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-web')
+	compile('org.apache.kafka:kafka-clients:1.0.0')
+    compile('ch.qos.logback:logback-classic:1.2.2')
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+jar {
+    baseName = 'dockerweb'
+}
+
+group = 'knightloon'
+version = '0.0.1-SNAPSHOT'
+
+
+task buildDocker(type: Docker, dependsOn: build) {
+  applicationName = jar.baseName
+  dockerfile = file('Dockerfile')
+  doFirst {
+    copy {
+      from jar
+      into "${stageDir}/target"
+    }
+  }
+}
+
+task runProducer(type: JavaExec, dependsOn: 'classes') {
+    main = 'com.example.dm.demo.kafka.producer.KafkaProducerExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runConsumer(type: JavaExec, dependsOn: 'classes') {
+    main = 'com.example.dm.demo.kafka.consumer.KafkaConsumerExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
